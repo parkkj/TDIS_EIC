@@ -3,13 +3,15 @@ This is the version1 Tagged DIS event generator with JLEIC configuration.
 
 Code is separated with proton and neutron tagged.
 
-1/ Reactions: proton tagged
+1/ Reactions: proton tagging
 
-A/ ep -> e' + p_s + \pi0,  eD -> e' + (p_s1 + \pi-)  + p_s2
+a) ep -> e' + p_s + \pi0,  c) eD -> e' + (p_s1 + \pi-)  + p_s2
 
 : Codes are you need : TDISMC_EIC.cpp, TDISMC_EIC.h
 
-B/ ep -> e' + n_s + \pi+, eD -> e' + (p_s + \pi0)  + n_s2
+2/ Reactions: neutron tagging
+
+b) ep -> e' + n_s + \pi+, d) eD -> e' + (p_s + \pi0)  + n_s2
 
 : Codes are you need : TDISMC_EICn.cpp, TDISMC_EICn.h
 
