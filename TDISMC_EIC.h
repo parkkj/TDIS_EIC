@@ -63,7 +63,7 @@ const  double D2R    = PI/(180.0);
 
 
 const double ZBeam =   1.;
-const double ABeam =   1.;           // 1 for proton beam, 2 for deuteron beam
+const double ABeam =   2.;           // 1 for proton beam, 2 for deuteron beam
 //const double CrossingTheta = 0.050;
 const double CrossingTheta = -0.050;
 //0.050; // 0.010 for eRHIC/ePHENIX
@@ -102,8 +102,187 @@ double sigma_th(double pInc, double mInc, double NormEmit, double betaSt){
 
 
 
+
 // subroutine to calculate the f2pi as function of recoiled nucleon momentum, xbj, theta
-// what is "th" ?
+// This is user parametrization by fit the Wally's codes 3Var_x.f() with integration of finite momentum range
+// typ = 5 ! t-dependent expon FORM FACTOR
+// dis = 1 !NEUTRAL EXCHANGE
+// FLAG = 0  --- THE PION CONTRIBUTION      | J = 0 + 1/2
+
+double f2pitexp(double p, double x, double th){
+  
+  double p0, p1, p2, p3, p4, p5;
+  int xflag = 0;
+  double fk = 0.0;
+  double fth = 0.0;
+
+  if (p > 0.05 && p <= 0.1){
+    p0 = 0.13151E-04;
+    p1 = 0.24655E-02;
+    p2 = -0.11011;
+    p3 = 1.6664;
+    p4 = -10.813;
+    p5 = 25.662;
+    if (x < 0.0555 || x > 0.083) xflag = 1;
+    fk = -0.954 + 66.5*p -1632.4*p*p + 14573.*p*p*p; 
+  }
+
+  if (p > 0.1 && p <= 0.2){
+    p0 = 0.21109E-03;
+    p1 = 0.24422E-01;
+    p2 = -0.65408;
+    p3 = 6.1526;
+    p4 = -25.771;
+    p5 = 41.141;
+    if (x < 0.0555 || x > 0.16) xflag = 1;
+    fk = 0.464 -15.4*p + 126.5*p*p;
+  }
+  
+  if (p > 0.2 && p <= 0.3){
+    p0 = 0.53755E-03;
+    p1 = 0.42349E-01;
+    p2 = -0.80465;
+    p3 = 5.4029;
+    p4 = -16.362;
+    p5 = 19.186;
+     if (x < 0.0555 || x > 0.226) xflag =1;
+     fk = -1.133 + 8.5354*p;
+  }
+
+  if (p > 0.3 && p <= 0.5){
+    p0 = 0.13141E-02;
+    p1 = 0.89010E-01;
+    p2 = -1.3003;
+    p3 = 7.0225;
+    p4 = -17.631;
+    p5 = 17.393;
+     if (x < 0.0555 || x > 0.281) xflag = 1;
+     fk = -1.345 + 9.47*p -7.91*p*p;
+  }
+
+  if (p < 0.05 || p > 0.5){
+    p0 = 0.0;
+    p1 = 0.0;
+    p2 = 0.0;
+    p3 = 0.0;
+    p4 = 0.0;
+    p5 = 0.0;
+  }
+
+  if (th < 1.8 || th > 74){
+    fth = 0.0;}
+  else{
+    fth = -0.183 + 0.0976*th -0.0024*th*th + 0.000015*th*th*th; }
+  
+  if( xflag == 1 || x < 0.0555 || x > 0.3){
+    return 0.0;}
+  else{
+    double f2 = p0 + p1*pow(x,1) + p2*pow(x,2) + p3*pow(x,3) + p4*pow(x,4) + p5*pow(x,5);  
+    double f2temp = f2*fk*fth;
+    return f2temp;
+  }
+  
+  
+ }
+
+
+
+
+
+
+// subroutine to calculate the f2pi as function of recoiled nucleon momentum, xbj, theta
+// This is user parametrization by fit the Wally's codes 3Var_x.f() with integration of finite momentum range
+// typ = 3 ! COV DIP FORM FACTOR
+// dis = 1 !NEUTRAL EXCHANGE
+// FLAG = 0  --- THE PION CONTRIBUTION      | J = 0 + 1/2
+
+double f2picov(double p, double x, double th){
+  
+  double p0, p1, p2, p3, p4, p5;
+  int xflag = 0;
+  double fk = 0.0;
+  double fth = 0.0;
+
+  if (p > 0.05 && p <= 0.1){
+    p0 = 0.30433e-04;
+    p1 = 0.60118e-03;
+    p2 = -0.30863e-01;
+    p3 = 0.74473e-01;
+    p4 = 4.2508;
+    p5 = -28.398;
+    if (x < 0.0555 || x > 0.083) xflag = 1;
+    fk = -0.954 + 66.5*p -1632.4*p*p + 14573.*p*p*p; 
+  }
+
+  if (p > 0.1 && p <= 0.2){
+    p0 = 0.43685e-03;
+    p1 = 0.83395e-02;
+    p2 = -0.20040;
+    p3 = 0.36447;
+    p4 = 7.8242;
+    p5 = -31.101;
+    if (x < 0.0555 || x > 0.16) xflag = 1;
+    fk = 0.464 -15.4*p + 126.5*p*p;
+  }
+  
+  if (p > 0.2 && p <= 0.3){
+    p0 = 0.60436e-03;
+    p1 = 0.45603e-01;
+    p2 = -0.86055;
+    p3 = 5.6867;
+    p4 = -16.812;
+    p5 = 19.095;
+     if (x < 0.0555 || x > 0.226) xflag =1;
+     fk = -1.133 + 8.5354*p;
+  }
+
+  if (p > 0.3 && p <= 0.5){
+    p0 = 0.16068e-02;
+    p1 = 0.10964;
+    p2 = -1.5980;
+    p3 = 8.6327;
+    p4 = -21.714;
+    p5 = 21.475;
+     if (x < 0.0555 || x > 0.281) xflag = 1;
+     fk = -1.345 + 9.47*p -7.91*p*p;
+  }
+
+  if (p < 0.05 || p > 0.5){
+    p0 = 0.0;
+    p1 = 0.0;
+    p2 = 0.0;
+    p3 = 0.0;
+    p4 = 0.0;
+    p5 = 0.0;
+  }
+
+  if (th < 1.8 || th > 74){
+    fth = 0.0;}
+  else{
+    fth = -0.183 + 0.0976*th -0.0024*th*th + 0.000015*th*th*th; }
+  
+  if( xflag == 1 || x < 0.0555 || x > 0.3){
+    return 0.0;}
+  else{
+    double f2 = p0 + p1*pow(x,1) + p2*pow(x,2) + p3*pow(x,3) + p4*pow(x,4) + p5*pow(x,5);  
+    double f2temp = f2*fk*fth;
+    return f2temp;
+  }
+  
+  
+ }
+
+
+
+
+// subroutine to calculate the f2pi as function of recoiled nucleon momentum, xbj, theta (Timothy J. Hobbs)
+// what is "th" = theta angle
+//
+// This is user parametrization by fit the Wally's codes 3Var_x.f() with integration of finite momentum range
+// typ = 2 !EXPONENTIAL FORM FACTOR (s-depdendent exp)
+// dis = 1 !NEUTRAL EXCHANGE
+// FLAG = 0  --- THE PION CONTRIBUTION      | J = 0 + 1/2
+
 double f2pi(double p, double x, double th){
   
   double p0, p1, p2, p3, p4, p5;

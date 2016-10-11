@@ -8,6 +8,7 @@
  */
 // General definition in this header
 #include "TDISMC_EIC.h"
+#include "tim_hobbs/timhobbs.h" //! no need to call because parametrization by fit
 #include <time.h>
 
 
@@ -18,14 +19,21 @@ void initcteqpdf();
 // Define form factor function for proton and pion : f2p and f2pi to get TDIS cross-section
 double f2p(double x);
 double f2pi(double p, double x, double th);
+double f2picov(double p, double x, double th);
+double f2pitexp(double p, double x, double th);
 
 // Define the cross-section
 double F2N(double x, double q2, int inucl);
 // new definition for collider frame to call CTEQ function
-double cdissigma( double x, double y, double q2, double nu, double ep, int inucl );
+double cdissigma(double x, double y, double q2, double nu, double ep, int inucl );
 double cdissigma_n(double x, double y_D, double q2, double nu, double eprime);
 double cdissigma_p(double x, double y_D, double q2, double nu, double eprime);
-  
+
+
+// Definition of Tim Hobbs functions
+double GRV_xVpi(double x,double q2);
+double GRV_xSpi(double x,double q2);
+
 // Define function calls for beam smearing
 double sigma_th(double pInc, double mInc, double NormEmit, double betaSt);
 	//
@@ -109,7 +117,11 @@ int mainx(double xMin,double xMax, double Q2Min,double Q2Max){
     double prmass;
     prmass =  MProton;
     pr_particle_id =  2212;
- 
+
+    double xVpiR, xSpiR;
+    double yy,rho_PS;
+    double F2pi,kTk,pi_int,F2piK;
+
 
     // Nuclear codes are given as 10-digit numbers +/-10LZZZAAAI
     // For a (hyper)nucleus consisting of 'n_p' protons, 'n_n' neutrons and
@@ -732,7 +744,59 @@ int mainx(double xMin,double xMax, double Q2Min,double Q2Max){
 		// pion form factor is only defined in xBj = (0.055 : 0.3)
 		//if (invts.xBj > 0.055 && invts.xBj < 0.3){
 		if (TDIS_xbj > 0.055 && TDIS_xbj < 0.3){
-		  fpi = fpifac*f2pi(P_pi, TDIS_xbj, theta_p2/D2R);
+		  //  typ = 2 ! s-dependent expon FORM FACTOR (L=1.56,dis=0,FLAG=0)
+		  //fpi = fpifac*f2pi(P_pi, TDIS_xbj, theta_p2/D2R);
+		  //  typ = 3 ! COV DIP FORM FACTOR
+		  //fpi = fpifac*f2picov(P_pi, TDIS_xbj, theta_p2/D2R);
+		  //  typ = 5 ! t-dependent expon FORM FACTOR (L=0.85,dis=0,FLAG=0)
+		  fpi = fpifac*f2pitexp(P_pi, TDIS_xbj, theta_p2/D2R);
+
+		  /*
+		    L = renormalization cut-off parameter... ex) typ = 2 ! 1.56GeV
+		    dis = charge state configuration (0=charge exchange, 1=neutral exchange)
+		    FLAG = combination of splitting function/PDF (0:\pi, 1:\rho, 2:\pi\Delta)
+		   */
+
+
+
+		  /*
+		  // ***************************************************************************************
+		  // ************************ TESTing with FF of pion exchange model ***********************
+		  // ***************************************************************************************
+		
+		  // Testing of "y" variable: assumption: same kinematic variables:  x=TDIS_xbj, k=P_pi, th=theta_p2
+		   yy = (P_pi/MProton)*cos(theta_p2)+(1/MProton)*(MProton-sqrt(MProton*MProton+P_pi*P_pi));
+		  // phase space factor (Jacobian)  !
+		   rho_PS = (2./MProton)*P_pi*P_pi*sin(theta_p2)*(1.0-sin(phi_p2)*cos(theta_p2)); 		  
+
+		  // TESTing pion PDF from GRV (inputs: x, Q2) (outputs: xVpi,  xSpi)  *********************
+		  // by definition (theory paper) x/y = xpi
+		  xVpiR = GRV_xVpi(xpi,invts.Q2);
+		  xSpiR = GRV_xSpi(xpi,invts.Q2);
+		 
+		  
+		   F2pi = (5./9.) *(xVpiR + 2.0* xSpiR);
+		   kTk = P_pi * sin(theta_p2);
+		   pi_int = fypiN(yy,kTk,L,typ,dis)*F2pi;
+
+		  // |k| integral loop 
+		   F2piK = (2./3.)*(2./3.)*pi_int;
+		  if(fpi>0){
+		    cout << "***************       ******************      *********************" << endl;
+		    //cout << "test outout GRV xVpi = " << xVpiR << " , at xbj= "<< TDIS_xbj <<", Q2= " << invts.Q2 << endl;
+		    //cout << "test outout GRV xSpi = " << xSpiR << " , at xbj= "<< TDIS_xbj <<", Q2= " << invts.Q2 << endl;
+
+		  }
+		  // ***************************************************************************************
+		  // ************************ TESTing with FF of pion exchange model ***********************
+		  // ***************************************************************************************
+		  */
+
+
+
+		  
+	       
+		    
 		}
 		else{
 		  fpi = 0.0;
@@ -783,8 +847,15 @@ int mainx(double xMin,double xMax, double Q2Min,double Q2Max){
 		  }
 		  sigma_tdis   = sigma_dis * (fpi/f2N); 
 		}
-		
 
+		/*
+		if(fpi>0.){
+		  cout << " what is f2N= "  << f2N  << ", fpi=" << fpi << ", momentum = " << P_pi << ", theta = " << theta_p2/D2R << endl;
+		}
+		*/
+
+
+		
 		// ***
 		// For debugging purpose
 		/*
